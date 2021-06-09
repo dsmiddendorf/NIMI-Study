@@ -18,6 +18,8 @@ if(!require(jtools)) install.packages("jtools", repos = "http://cran.us.r-projec
 if(!require(interactions)) install.packages("interactions", repos = "http://cran.us.r-project.org")
 if(!require(lm.beta)) install.packages("lm.beta", repos = "http://cran.us.r-project.org")
 if(!require(readxl)) install.packages("readxl", repos = "http://cran.us.r-project.org")
+if(!require(rstatix)) install.packages("rstatix", repos = "http://cran.us.r-project.org")
+
 
 # Loading libraries used for the following analysis
 library(tidyverse)
@@ -35,6 +37,7 @@ library(jtools)
 library(interactions)
 library(lm.beta)
 library(readxl)
+library(rstatix)
 
 # Loading data 
 nimi <- read_excel("C:/Users/Daniel/iCloudDrive/01. College/Honours Bachelor Thesis/Analysis/Analysis Data Daniel.xlsx")
@@ -259,21 +262,30 @@ U$Condition <- as.numeric(U$Condition) # Character number conditions into number
 U$Type <- as.numeric(U$Type) # Character number conditions into number number conditions for Type
 
 # Creating the Model for Usabiltiy
-modelU <- lm(U ~ Condition*Type, data = U) # Regression Model predicting ER by Condition and Type (incl. moderator)
-summary(modelU) # More information on the model
-probe_interaction(modelU, pred = Condition, modx = Type) # testing the interaction term
 
-t.test(U$U[U$Condition == 1 & U$Type == 0], U$U[U$Condition == 0 & U$Type == 0],
-       alternative = "greater", paired = T, var.equal = T)
+## Analysis including moderation effect
+# modelU <- lm(U ~ Condition*Type, data = U) # Regression Model predicting ER by Condition and Type (incl. moderator)
+# summary(modelU) # More information on the model
+# probe_interaction(modelU, pred = Condition, modx = Type) # testing the interaction term
+# 
+# t.test(U$U[U$Condition == 1 & U$Type == 0], U$U[U$Condition == 0 & U$Type == 0],
+#        alternative = "greater", paired = T, var.equal = T)
+
+t.test(U$U[U$Condition == 1], U$U[U$Condition == 0],
+       alternative = "greater", paired = T)
 
 # Effect size
-effU <- data.frame(video = U$U[U$Condition == 1 & U$Type == 0], written = U$U[U$Condition == 0 & U$Type == 0])
+# effU <- data.frame(video = U$U[U$Condition == 1 & U$Type == 0], written = U$U[U$Condition == 0 & U$Type == 0])
+# effU <- gather(effU, key = "Condition", value = "U")
+# cohens_d(effU, U ~ Condition, paired = T, var.equal = T)
+
+effU <- data.frame(video = U$U[U$Condition == 1], written = U$U[U$Condition == 0])
 effU <- gather(effU, key = "Condition", value = "U")
-cohens_d(effU, U ~ Condition, paired = T, var.equal = T)
+cohens_d(effU, U ~ Condition, paired = T)
 
 # Assumptions
 ## Assumptions for Multiple Linear Regression
-plot(modelU)
+# plot(modelU)
 
 ## Assumptions for t-test
 diff_U_V <- U$U[U$Condition == 1 & U$Type == 0] - U$U[ER$Condition == 0 & ER$Type == 0]
