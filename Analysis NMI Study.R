@@ -64,7 +64,7 @@ df <- data.frame(Characteristic = c("Gender (Mean)", "Age (Mode)", "Language (Mo
 
 # Table with descriptive variables
 descriptives <- kable(df)
-
+descriptives
 
 # Table Age, Language, Education
 table(nimi$Age)
@@ -125,15 +125,16 @@ CMC_W <- c(4, 8, 13, 15)
 
 
 # Creating the Experiential Realness Dataframe
-ER <- data.frame(ER_V_HI = (nimi$ER_V_01[nimi$Condition %in% CHI_V] + nimi$ER_V_02[nimi$Condition %in% CHI_V] + -1*nimi$ER_V_03[nimi$Condition %in% CHI_V])/3,
+ER <- data.frame(ER_V_HI = (nimi$ER_V_01[nimi$Condition %in% CHI_V] + nimi$ER_V_02[nimi$Condition %in% CHI_V] + nimi$ER_V_03[nimi$Condition %in% CHI_V])/3,
                  ER_V_MC = (nimi$ER_V_01[nimi$Condition %in% CMC_V] + nimi$ER_V_02[nimi$Condition %in% CMC_V] + -1*nimi$ER_V_03[nimi$Condition %in% CMC_V])/3, 
-                 ER_W_HI = (nimi$ER_W_01[nimi$Condition %in% CHI_W] + nimi$ER_W_02[nimi$Condition %in% CHI_W] + -1*nimi$ER_W_03[nimi$Condition %in% CHI_W])/3,
+                 ER_W_HI = (nimi$ER_W_01[nimi$Condition %in% CHI_W] + nimi$ER_W_02[nimi$Condition %in% CHI_W] + nimi$ER_W_03[nimi$Condition %in% CHI_W])/3,
                  ER_W_MC = (nimi$ER_W_01[nimi$Condition %in% CMC_W] + nimi$ER_W_02[nimi$Condition %in% CMC_W] + -1*nimi$ER_W_03[nimi$Condition %in% CMC_W])/3)
 
 ER <- pivot_longer(ER, 'ER_V_HI':'ER_W_MC', names_to = "Condition", values_to = "ER") # Transform data into long format
 ER <- na.omit(ER) # omit NAs
 ER <- data.frame(ER[,2], str_split_fixed(ER$Condition, "_", 3)[,c(2,3)]) # String processing of conditions. Create column with Condition and Type
 colnames(ER) <- c("ER", "Condition", "Type") # Create new column names
+
 
 # Transform conditions into numbers
 ER$Condition[ER$Condition == "V"] <- 1
@@ -146,6 +147,9 @@ ER$Type <- as.numeric(ER$Type) # Character number conditions into number number 
 # Creating the Model for ER
 modelER <- lm(ER ~ Condition*Type, data = ER) # Regression Model predicting ER by Condition and Type (incl. moderator)
 summary(modelER) # More information on the model
+modelER <- lm(ER ~ Condition*Type, data = ER) # Regression Model predicting ER by Condition and Type (incl. moderator)
+
+
 probe_interaction(modelER, pred = Condition, modx = Type) # testing the interaction term
 t.test(ER$ER[ER$Condition == 1 & ER$Type == 0], ER$ER[ER$Condition == 0 & ER$Type == 0],
        alternative = "greater", paired = T, var.equal = T)
@@ -181,6 +185,7 @@ SP <- na.omit(SP) # omit NAs
 
 SP <- data.frame(SP[,2], str_split_fixed(SP$Condition, "_", 3)[,c(2,3)]) # String processing of conditions. Create column with Condition and Type
 colnames(SP) <- c("SP", "Condition", "Type") # Create new column names
+
 
 # Transform conditions into numbers
 SP$Condition[SP$Condition == "V"] <- 1
@@ -263,29 +268,15 @@ U$Type <- as.numeric(U$Type) # Character number conditions into number number co
 
 # Creating the Model for Usabiltiy
 
-## Analysis including moderation effect
-# modelU <- lm(U ~ Condition*Type, data = U) # Regression Model predicting ER by Condition and Type (incl. moderator)
-# summary(modelU) # More information on the model
-# probe_interaction(modelU, pred = Condition, modx = Type) # testing the interaction term
-# 
-# t.test(U$U[U$Condition == 1 & U$Type == 0], U$U[U$Condition == 0 & U$Type == 0],
-#        alternative = "greater", paired = T, var.equal = T)
-
 t.test(U$U[U$Condition == 1], U$U[U$Condition == 0],
        alternative = "greater", paired = T)
 
 # Effect size
-# effU <- data.frame(video = U$U[U$Condition == 1 & U$Type == 0], written = U$U[U$Condition == 0 & U$Type == 0])
-# effU <- gather(effU, key = "Condition", value = "U")
-# cohens_d(effU, U ~ Condition, paired = T, var.equal = T)
-
 effU <- data.frame(video = U$U[U$Condition == 1], written = U$U[U$Condition == 0])
 effU <- gather(effU, key = "Condition", value = "U")
 cohens_d(effU, U ~ Condition, paired = T)
 
 # Assumptions
-## Assumptions for Multiple Linear Regression
-# plot(modelU)
 
 ## Assumptions for t-test
 diff_U_V <- U$U[U$Condition == 1 & U$Type == 0] - U$U[ER$Condition == 0 & ER$Type == 0]
