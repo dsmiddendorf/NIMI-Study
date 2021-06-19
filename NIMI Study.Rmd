@@ -1,0 +1,465 @@
+---
+title: "New Instructions for Mental Imagery - Brain Computer Interfaces"
+author: "Daniel Middendorf"
+date: "04/06/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+##########################################################
+# Import data and libraries
+##########################################################
+
+# Downloading required libraries for analysis if they have not been downloaded yet
+if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
+if(!require(ggplot2)) install.packages("ggplot2", repos = "http://cran.us.r-project.org")
+if(!require(cowplot)) install.packages("cowplot", repos = "http://cran.us.r-project.org")
+if(!require(knitr)) install.packages("knitr", repos = "http://cran.us.r-project.org")
+if(!require(interactions)) install.packages("interactions", repos = "http://cran.us.r-project.org")
+if(!require(readxl)) install.packages("readxl", repos = "http://cran.us.r-project.org")
+if(!require(rstatix)) install.packages("rstatix", repos = "http://cran.us.r-project.org")
+if(!require(psy)) install.packages("psy", repos = "http://cran.us.r-project.org")
+
+# Loading libraries/functions used for the following analyses
+library(tidyverse)
+library(ggplot2)
+library(cowplot)
+library(knitr)
+library(interactions)
+library(readxl)
+library(rstatix)
+library(readxl)
+library(psy)
+
+# Create a function that computes the mode
+getmode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+# Loading data 
+nimi <- read_excel("C:/Users/Daniel/iCloudDrive/01. College/Honours Bachelor Thesis/Analysis/Analysis Data Daniel.xlsx")
+
+# Make gender/used bci before/ used MI before column numeric (Male,Used MI{BCI before = 1)
+nimi$Gender <- ifelse(nimi$Gender == "Male", 1, 0)
+nimi$`Used MI before` <- ifelse(nimi$`Used MI before` == "Yes", 1, 0)
+nimi$`Used BCI before` <- ifelse(nimi$`Used BCI before` == "Yes", 1, 0)
+```
+
+# Descriptive Statistics
+
+## Tables of the Descriptive Statistics
+
+```{r , echo = F}
+##########################################################
+# Descriptive Sample Data
+##########################################################
+
+# Sample Size
+samplesize <- data.frame(nrow(nimi))
+colnames(samplesize) <- "Sample Size"
+kable(samplesize)
+
+# Tables of all the descriptive data regarding the sample
+df <- data.frame(Characteristic = c("Gender (Mean)", "Age (Mode)", "Language (Mode)", "Education (Mode)", "Used MI Before (Mean)", "Used BCI Before (Mean)"),
+                 Value = c(round(mean(nimi$Gender),2), getmode(nimi$Age), getmode(nimi$Language), getmode(nimi$Education), round(mean(nimi$`Used MI before`),2), round(mean(nimi$`Used BCI before`),2)))
+
+# Table with descriptive variables
+descriptives <- kable(df)
+descriptives
+
+# Create Table with Age Frequencies
+Age <- as.data.frame(table(nimi$Age)) %>% arrange(desc(Freq))
+colnames(Age) <- c("Age", "Frequency")
+kable(Age)
+
+# Create Table with Language Frequencies
+Language <- as.data.frame(table(nimi$Language)) %>% arrange(desc(Freq))
+colnames(Language) <- c("Language", "Frequency")
+kable(Language)
+
+# Create Table with Language Frequencies
+Education <- as.data.frame(table(nimi$Education)) %>% arrange(desc(Freq))
+colnames(Education) <- c("Education", "Frequency")
+kable(Education)
+table(nimi$Age)
+table(nimi$Gender)
+table(nimi$Education)
+```
+
+## Density Diagrams of the Descriptive Variables
+
+```{r Density Diagramms, echo = F, fig.align='center', comment = "", message = F, results='hide',fig.keep='all'}
+
+# Change Lables Education to fit the lables under the plot
+nimi$Education[nimi$Education == "Other"] <- "O" # O stands for other school diploma
+nimi$Education[nimi$Education == "(Technical) Secondary School Diploma"] <- "TSD" # TSD stands for technical school diploma
+nimi$Education[nimi$Education == "University Degree"] <- "UD" # UD stands for University Degree
+nimi$Education[nimi$Education == "Doctorate Degree"] <- "DD" # DD stands for Doctorate Degree
+nimi$Education[nimi$Education == "Secondary School"] <- "SS" # SS stands for Secondary School Diploma
+
+# Create Density Plot for Gender variable
+dGender <- nimi %>% ggplot(aes(Gender)) + geom_bar() + theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) # Density Plot for Gender
+dAge <- nimi %>% ggplot(aes(Age)) + geom_bar() + theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) # Density Plot for Age
+dLanguage <- nimi %>% ggplot(aes(Language)) + geom_bar() + theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) # Density Plot for Language
+dEducation <- nimi %>% ggplot(aes(Education)) + geom_bar() + theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) # Density Plot for Education
+dMIbefore <- nimi %>% ggplot(aes(`Used MI before`)) + geom_bar() + theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) # Density Plot for done Motor Imagery before
+dBCIbefore <- nimi %>% ggplot(aes(`Used BCI before`)) + geom_bar() + theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) # Density Plot for used a brain-computer interface before
+
+# Merge all Density Plots into one big plot (grid)
+density_plots <- plot_grid(dGender, dAge, dLanguage, dEducation, dMIbefore, dBCIbefore)
+density_plots
+```
+
+# Experiential Realness
+
+```{r Experiential Realness - Creating the Dataframe, echo = F, fig.align='center', comment = "", message = F,fig.keep='all'}
+##########################################################
+# Experiential Realness - Creating the Dataframe
+##########################################################
+
+# Creating the Experiential Realness Dataframe
+
+# Save analysis relevant conditions; Conditions in which the used data is stored
+CHI_V <- c(2, 4, 9, 13)
+CHI_W <- c(1, 3, 10, 14)
+CMC_V <- c(3, 7, 14, 16)
+CMC_W <- c(4, 8, 13, 15)
+CHI <- c(CHI_V, CHI_W)
+CMC <- c(CMC_V, CMC_W)
+
+# All variable are coded positively excelpt the third question of Experiential Realness for Mental Calculation
+ER <- data.frame(ER_V_HI = (nimi$ER_V_01[nimi$Condition %in% CHI_V] + nimi$ER_V_02[nimi$Condition %in% CHI_V] + nimi$ER_V_03[nimi$Condition %in% CHI_V])/3,
+                 ER_V_MC = (nimi$ER_V_01[nimi$Condition %in% CMC_V] + nimi$ER_V_02[nimi$Condition %in% CMC_V] + -1*nimi$ER_V_03[nimi$Condition %in% CMC_V])/3, 
+                 ER_W_HI = (nimi$ER_W_01[nimi$Condition %in% CHI_W] + nimi$ER_W_02[nimi$Condition %in% CHI_W] + nimi$ER_W_03[nimi$Condition %in% CHI_W])/3,
+                 ER_W_MC = (nimi$ER_W_01[nimi$Condition %in% CMC_W] + nimi$ER_W_02[nimi$Condition %in% CMC_W] + -1*nimi$ER_W_03[nimi$Condition %in% CMC_W])/3)
+ER <- pivot_longer(ER, 'ER_V_HI':'ER_W_MC', names_to = "Condition", values_to = "ER") # Transform data into long format
+
+ER <- data.frame(ER[,2], str_split_fixed(ER$Condition, "_", 3)[,c(2,3)]) # String processing of conditions. Create column with Condition and Type
+colnames(ER) <- c("ER", "Condition", "Type") # Create new column names
+
+# Transform conditions into numbers
+ER$Condition[ER$Condition == "V"] <- 1 # Video Condition is Coded: Condition 1
+ER$Condition[ER$Condition == "W"] <- 0 # Written Condition is Coded: Condition 0
+
+ER$Type[ER$Type == "HI"] <- 1 # Hand Imagery Condition is Coded: Type 1
+ER$Type[ER$Type == "MC"] <- 0 # Mental Calculation Condition is Coded: Type 0
+
+ER$Condition <- as.numeric(ER$Condition) # Character number conditions into number number conditions for Condition
+ER$Type <- as.numeric(ER$Type) # Character number conditions into number number conditions for Type
+```
+
+## Checking Assumptions
+
+Testing the assumptions for experiential realness for motor imagery. 
+Checking for normality by plotting  a density plot of the difference between experiential realness for motor imagery scores.
+Checking for homogeneity of variances by performing the Levene's test.
+
+```{r Experiential Realness - Testing Assumptions HI, echo = F, fig.align='center', comment = "", message = F,fig.keep='all'}
+##########################################################
+# Experiential Realness - Testing Assumptions
+##########################################################
+
+# Assumptions for t-test Hand Imagery
+# Checking for Normality
+diff_ER_V_HI <- ER$ER[ER$Condition == 1 & ER$Type == 1] - ER$ER[ER$Condition == 0 & ER$Type == 1]
+plot(density(diff_ER_V_HI))
+
+# Checking for Homogeneity t-test Hand Imagery
+levene_ER_V_HI <- data.frame(video = ER$ER[ER$Condition == 1 & ER$Type == 1], written = ER$ER[ER$Condition == 0 & ER$Type == 1]) # Creating a Dataframe with only Hand Imagery (Type == 1) with column video and written
+levene_ER_V_HI <- gather(levene_ER_V_HI, key = "Condition", value = "ER") # Transforming the dataframe so that it contains a column for condition and corresponding values for experiential realness
+# Performing the Levene Test to check for homogeneity
+levene_test(levene_ER_V_HI, ER ~ Condition)
+```
+
+Testing the assumptions for experiential realness for mental calculation. 
+Checking for normality by plotting  a density plot of the difference between experiential realness for motor imagery scores.
+Checking for homogeneity of variances by performing the Levene's test.
+
+```{r Experiential Realness - Testing Assumptions MC, echo = F, fig.align='center', comment = "", message = F,fig.keep='all'}
+
+# Assumptions for t-test Mental Calculation
+# Checking for Normality
+diff_ER_V_MC <- ER$ER[ER$Condition == 1 & ER$Type == 0] - ER$ER[ER$Condition == 0 & ER$Type == 0]
+plot(density(diff_ER_V_MC))
+
+# Checking for Homogeneity t-test Mental Calculation
+levene_ER_V_MC <- data.frame(video = ER$ER[ER$Condition == 1 & ER$Type == 0], written = ER$ER[ER$Condition == 0 & ER$Type == 0]) # Creating a Dataframe with only Mental Calculation (Type == 0) with column video and written
+levene_ER_V_MC <- gather(levene_ER_V_MC, key = "Condition", value = "ER") # Transforming the dataframe so that it contains a column for condition and corresponding values for experiential realness
+# Performing the Levene Test to check for homogeneity
+levene_test(levene_ER_V_MC, ER ~ Condition)
+
+```
+
+Testing assumptions for the multiple regression model
+
+```{r Experiential Realness - Testing Assumptions Multiple Linear Regression, echo = F, fig.align='center', comment = "", message = F,fig.keep='all'}
+# Assumptions for multiple linear regression
+modelER <- lm(ER ~ Condition*Type, data = ER) # Regression Model predicting ER by Condition and Type (incl. moderator)
+par(mfrow = c(2,2))
+plot(modelER) 
+```
+
+
+
+```{r Experiential Realness - Fitting the Model, echo = F, fig.align='center', comment = "", message = F,fig.keep='all'}
+##########################################################
+# Experiential Realness - Fitting a Model
+##########################################################
+
+# Cronbach's alpha
+ER_cronbach <- data.frame(na.omit(c(nimi$ER_V_01, nimi$ER_W_01)), na.omit(c(nimi$ER_V_02,nimi$ER_W_02)),
+                 na.omit(c(nimi$ER_V_03[nimi$Condition %in% CHI_V],nimi$ER_W_03[nimi$Condition %in% CHI_W],
+                   -1*nimi$ER_V_03[nimi$Condition %in% CMC_V], -1*nimi$ER_W_03[nimi$Condition %in% CMC_W])))
+cronbach(ER_cronbach)
+
+# T-Test for Hand Imagery 
+t.test(ER$ER[ER$Condition == 1 & ER$Type == 1], ER$ER[ER$Condition == 0 & ER$Type == 1],
+       alternative = "greater", paired = T, var.equal = T) # Pooled sample dependent t-test testing a difference in Experiential Realness for Hand Imagery between Written and Video Instruction
+
+# Cohen's D for Hand Imagery
+effERHI <- data.frame(video = ER$ER[ER$Condition == 1 & ER$Type == 1], written = ER$ER[ER$Condition == 0 & ER$Type == 1])
+effERHI <- gather(effERHI, key = "Condition", value = "ER")
+cohens_d(effERHI, ER ~ Condition, paired = T, var.equal = T)
+
+# T-Test for Mental Calculation
+t.test(ER$ER[ER$Condition == 1 & ER$Type == 0], ER$ER[ER$Condition == 0 & ER$Type == 0],
+       alternative = "greater", paired = T, var.equal = T) # Pooled sample dependent t-test testing a difference in Experiential Realness for Mental Calculation between Written and Video Instruction
+
+# Cohen's D for Hand Imagery
+effERMC <- data.frame(video = ER$ER[ER$Condition == 1 & ER$Type == 0], written = ER$ER[ER$Condition == 0 & ER$Type == 0])
+effERMC <- gather(effERMC, key = "Condition", value = "ER")
+cohens_d(effERMC, ER ~ Condition, paired = T, var.equal = T)
+
+# Creating the Model to test for the interaction effect of task type (MC/HI)
+summary(modelER) # More information on the model
+
+probe_interaction(modelER, pred = Condition, modx = Type) # testing the interaction term
+
+# Testing the difference of slopes between video and written for HI
+slope_V_ER <- ER %>% filter(Type == 1) %>% lm(ER ~ Condition, data = .) %>% summary()
+slope_W_ER <- ER %>% filter(Type == 0) %>% lm(ER ~ Condition, data = .) %>% summary()
+
+slopediff_ER <- (slope_V_ER$coefficients[,1][2] - slope_W_ER$coefficients[,1][2]) / (sqrt(slope_V_ER$coefficients[,2][2]^2 + slope_W_ER$coefficients[,2][2]^2))
+pt(slopediff_ER, df = 36, lower.tail = F) # p value for the difference in p values
+```
+
+
+# Subjective Performance
+
+```{r Subjective Performance, echo = F, fig.align='center', comment = "", message = F,fig.keep='all'}
+
+##########################################################
+# Subjective Performance - Creating the Dataframe
+##########################################################
+
+# Creating the Subjective Performance Dataframe
+SP <- data.frame(SP_V_HI = (nimi$SP_V_01[nimi$Condition %in% CHI_V] + nimi$SP_V_02[nimi$Condition %in% CHI_V])/2,
+                 SP_V_MC = (nimi$SP_V_01[nimi$Condition %in% CMC_V] + nimi$SP_V_02[nimi$Condition %in% CMC_V])/2, 
+                 SP_W_HI = (nimi$SP_W_01[nimi$Condition %in% CHI_W] + nimi$SP_W_02[nimi$Condition %in% CHI_W])/2,
+                 SP_W_MC = (nimi$SP_W_01[nimi$Condition %in% CMC_W] + nimi$SP_W_02[nimi$Condition %in% CMC_W])/2)
+
+SP <- pivot_longer(SP, 'SP_V_HI':'SP_W_MC', names_to = "Condition", values_to = "SP") # Transform data into long format
+
+SP <- data.frame(SP[,2], str_split_fixed(SP$Condition, "_", 3)[,c(2,3)]) # String processing of conditions. Create column with Condition and Type
+
+colnames(SP) <- c("SP", "Condition", "Type") # Change new column names
+
+# Transform conditions into numbers
+SP$Condition[SP$Condition == "V"] <- 1 # Video Condition is Coded: Condition 1
+SP$Condition[SP$Condition == "W"] <- 0 # Written Condition is Coded: Condition 0
+
+SP$Type[SP$Type == "HI"] <- 1 # Hand Imagery Condition is Coded: Type 1
+SP$Type[SP$Type == "MC"] <- 0 # Mental Calculation Condition is Coded: Type 0
+
+SP$Condition <- as.numeric(SP$Condition) # Character number conditions into number number conditions for Condition
+SP$Type <- as.numeric(SP$Type) # Character number conditions into number number conditions for Type
+
+##########################################################
+# Subjective Performance - Testing Assumptions
+##########################################################
+
+# Assumptions for t-test Hand Imagery
+# Checking for Normality
+diff_SP_V_HI <- SP$SP[SP$Condition == 1 & SP$Type == 1] - SP$SP[SP$Condition == 0 & SP$Type == 1]
+plot(density(diff_SP_V_HI))
+
+# Checking for Homogeneity t-test Hand Imagery
+levene_SP_V_HI <- data.frame(video = SP$SP[SP$Condition == 1 & SP$Type == 1], written = SP$SP[SP$Condition == 0 & SP$Type == 1]) # Creating a Dataframe with only Hand Imagery (Type == 1) with column video and written
+levene_SP_V_HI <- gather(levene_SP_V_HI, key = "Condition", value = "SP") # Transforming the dataframe so that it contains a column for condition and corresponding values for subjective performance
+# Performing the Levene Test to check for homogeneity
+levene_test(levene_SP_V_HI, SP ~ Condition)
+
+
+# Assumptions for t-test Mental Calculation
+# Checking for Normality
+diff_SP_V_MC <- SP$SP[ER$Condition == 1 & ER$Type == 0] - SP$SP[SP$Condition == 0 & SP$Type == 0]
+plot(density(diff_SP_V_MC))
+
+# Checking for Homogeneity t-test Mental Calculation
+levene_SP_V_MC <- data.frame(video = SP$SP[SP$Condition == 1 & SP$Type == 0], written = SP$SP[SP$Condition == 0 & SP$Type == 0]) # Creating a Dataframe with only Mental Calculation (Type == 0) with column video and written
+levene_SP_V_MC <- gather(levene_SP_V_MC, key = "Condition", value = "SP") # Transforming the dataframe so that it contains a column for condition and corresponding values for subjective performance
+# Performing the Levene Test to check for homogeneity
+levene_test(levene_SP_V_MC, SP ~ Condition)
+
+# Assumptions for multiple linear regression
+modelSP <- lm(SP ~ Condition*Type, data = SP) # Regression Model predicting ER by Condition and Type (incl. moderator)
+plot(modelSP) 
+
+##########################################################
+# Subjective Performance - Fitting a Model
+##########################################################
+
+# Cronbach's alpha
+SP_cronbach <- data.frame(na.omit(c(nimi$SP_V_01, nimi$SP_W_01)),
+                          na.omit(c(nimi$SP_V_02,nimi$SP_W_02)),
+                          na.omit(c(nimi$SP_V_03, nimi$SP_W_03)))
+cronbach(SP_cronbach)
+
+# T-Test for Hand Imagery 
+t.test(SP$SP[SP$Condition == 1 & SP$Type == 1], SP$SP[SP$Condition == 0 & SP$Type == 1],
+       alternative = "greater", paired = T, var.equal = T) # Pooled sample dependent t-test testing a difference in Subjective Performance for Hand Imagery between Written and Video Instruction
+
+# Cohen's D for Hand Imagery
+effSPHI <- data.frame(video = SP$SP[SP$Condition == 1 & SP$Type == 1], written = SP$SP[SP$Condition == 0 & SP$Type == 1])
+effSPHI <- gather(effSPHI, key = "Condition", value = "SP")
+cohens_d(effSPHI, SP ~ Condition, paired = T, var.equal = T)
+
+# T-Test for Mental Calculation
+t.test(SP$SP[SP$Condition == 1 & SP$Type == 0], SP$SP[SP$Condition == 0 & SP$Type == 0],
+       alternative = "greater", paired = T, var.equal = T) # Pooled sample dependent t-test testing a difference in Subjective Performance for Mental Calculation between Written and Video Instruction
+
+# Cohen's D for Hand Imagery
+effSPMC <- data.frame(video = SP$SP[SP$Condition == 1 & SP$Type == 0], written = SP$SP[SP$Condition == 0 & SP$Type == 0])
+effSPMC <- gather(effSPMC, key = "Condition", value = "SP")
+cohens_d(effSPMC, SP ~ Condition, paired = T, var.equal = T)
+
+# Creating the Model to test for the interaction effect of task type (MC/HI)
+summary(modelSP) # More information on the model
+probe_interaction(modelSP, pred = Condition, modx = Type) # testing the interaction term
+
+# Testing the difference of slopes between video and written for HI
+slope_V_SP <- SP %>% filter(Type == 1) %>% lm(SP ~ Condition, data = .) %>% summary()
+slope_W_SP <- SP %>% filter(Type == 0) %>% lm(SP ~ Condition, data = .) %>% summary()
+
+slopediff_SP <- (slope_V_SP$coefficients[,1][2] - slope_W_SP$coefficients[,1][2]) / (sqrt(slope_V_SP$coefficients[,2][2]^2 + slope_W_SP$coefficients[,2][2]^2))
+pt(slopediff_SP, df = 36, lower.tail = F) # p value for the difference in p values
+
+```
+
+
+# Usability
+
+```{r Usability, echo = F, fig.align='center', comment = "", message = F,fig.keep='all'}
+
+##########################################################
+# Usability - Creating the Dataframe
+##########################################################
+
+# Creating the Usability Dataframe
+U <- data.frame(U_V_HI = (nimi$U_V_01[nimi$Condition %in% CHI_V] +
+                  -1 * nimi$U_V_02[nimi$Condition %in% CHI_V] +
+                  nimi$U_V_03[nimi$Condition %in% CHI_V] + 
+                  nimi$U_V_04[nimi$Condition %in% CHI_V] + 
+                  -1 *nimi$U_V_05[nimi$Condition %in% CHI_V]+ 
+                  nimi$U_V_06[nimi$Condition %in% CHI_V] +
+                  nimi$U_V_07[nimi$Condition %in% CHI_V])/7, 
+                U_V_MC = (nimi$U_V_01[nimi$Condition %in% CMC_V] +
+                  -1 * nimi$U_V_02[nimi$Condition %in% CMC_V] +
+                  nimi$U_V_03[nimi$Condition %in% CMC_V] + 
+                  nimi$U_V_04[nimi$Condition %in% CMC_V] + 
+                  -1 *nimi$U_V_05[nimi$Condition %in% CMC_V]+ 
+                  nimi$U_V_06[nimi$Condition %in% CMC_V] +
+                  nimi$U_V_07[nimi$Condition %in% CMC_V])/7,
+                U_W_HI = (nimi$U_W_01[nimi$Condition %in% CHI_W] +
+                  -1 * nimi$U_W_02[nimi$Condition %in% CHI_W] +
+                  nimi$U_W_03[nimi$Condition %in% CHI_W] + 
+                  nimi$U_W_04[nimi$Condition %in% CHI_W] + 
+                  -1 *nimi$U_W_05[nimi$Condition %in% CHI_W]+ 
+                  nimi$U_W_06[nimi$Condition %in% CHI_W] +
+                  nimi$U_W_07[nimi$Condition %in% CHI_W])/7,
+                U_W_MC = (nimi$U_W_01[nimi$Condition %in% CMC_W] +
+                  -1 * nimi$U_W_02[nimi$Condition %in% CMC_W] +
+                  nimi$U_W_03[nimi$Condition %in% CMC_W] + 
+                  nimi$U_W_04[nimi$Condition %in% CMC_W] + 
+                  -1 *nimi$U_W_05[nimi$Condition %in% CMC_W]+ 
+                  nimi$U_W_06[nimi$Condition %in% CMC_W] +
+                  nimi$U_W_07[nimi$Condition %in% CMC_W])/7)
+
+U <- pivot_longer(U, 'U_V_HI':'U_W_MC', names_to = "Condition", values_to = "U") # Transform data into long format
+
+U <- data.frame(U[,2], str_split_fixed(U$Condition, "_", 3)[,c(2,3)]) # String processing of conditions. Create column with Condition and Type
+
+colnames(U) <- c("U", "Condition", "Type") # Change new column names
+
+# Transform conditions into numbers
+U$Condition[U$Condition == "V"] <- 1 # Video Condition is Coded: Condition 1
+U$Condition[U$Condition == "W"] <- 0 # Written Condition is Coded: Condition 0
+
+U$Type[U$Type == "HI"] <- 1 # Hand Imagery Condition is Coded: Type 1
+U$Type[U$Type == "MC"] <- 0 # Mental Calculation Condition is Coded: Type 0
+
+U$Condition <- as.numeric(U$Condition) # Character number conditions into number number conditions for Condition
+U$Type <- as.numeric(U$Type) # Character number conditions into number number conditions for Type
+
+##########################################################
+# Usability - Testing Assumptions
+##########################################################
+
+# Assumptions for t-test Hand Imagery
+# Checking for Normality
+diff_U_V <- U$U[U$Condition == 1] - U$U[U$Condition == 0]
+plot(density(diff_U_V))
+
+# Checking for Homogeneity t-test Hand Imagery
+levene_U_V <- data.frame(video = U$U[U$Condition == 1], written = U$U[U$Condition == 0]) # Creating a Dataframe with only Hand Imagery (Type == 1) with column video and written
+levene_U_V <- gather(levene_U_V, key = "Condition", value = "U") # Transforming the dataframe so that it contains a column for condition and corresponding values for Usability
+# Performing the Levene Test to check for homogeneity
+levene_test(levene_U_V, U ~ Condition)
+
+
+##########################################################
+# Usability - Fitting a Model
+##########################################################
+# Cronbach's alpha
+U_cronbach <- data.frame(na.omit(c(nimi$U_V_01, nimi$U_W_01)),
+                         -1*na.omit(c(nimi$U_V_02,nimi$U_W_02)),
+                         na.omit(c(nimi$U_V_03, nimi$U_W_03)),
+                         na.omit(c(nimi$U_V_04, nimi$U_W_04)),
+                         -1*na.omit(c(nimi$U_V_05, nimi$U_W_05)),
+                         na.omit(c(nimi$U_V_06, nimi$U_W_06)),
+                         na.omit(c(nimi$U_V_07, nimi$U_W_07)))
+cronbach(U_cronbach)
+
+# T-Test for Hand Imagery 
+t.test(U$U[U$Condition == 1], U$U[U$Condition == 0],
+       alternative = "greater", paired = T, var.equal = T) # Pooled sample dependent t-test testing a difference in Usability for Hand Imagery between Written and Video Instruction
+
+# Cohen's D for Hand Imagery
+effUHI <- data.frame(video = U$U[U$Condition == 1], written = U$U[U$Condition == 0])
+effUHI <- gather(effUHI, key = "Condition", value = "U")
+cohens_d(effUHI, U ~ Condition, paired = T, var.equal = T)
+```
+
