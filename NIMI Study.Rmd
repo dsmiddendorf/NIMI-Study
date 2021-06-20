@@ -23,6 +23,9 @@ if(!require(interactions)) install.packages("interactions", repos = "http://cran
 if(!require(readxl)) install.packages("readxl", repos = "http://cran.us.r-project.org")
 if(!require(rstatix)) install.packages("rstatix", repos = "http://cran.us.r-project.org")
 if(!require(psy)) install.packages("psy", repos = "http://cran.us.r-project.org")
+if(!require(extrafont)) install.packages("extrafont", repos = "http://cran.us.r-project.org")
+if(!require(jtools)) install.packages("jtools", repos = "http://cran.us.r-project.org")
+
 
 # Loading libraries/functions used for the following analyses
 library(tidyverse)
@@ -34,6 +37,8 @@ library(readxl)
 library(rstatix)
 library(readxl)
 library(psy)
+library(extrafont)
+library(jtools)
 
 # Create a function that computes the mode
 getmode <- function(v) {
@@ -45,7 +50,7 @@ getmode <- function(v) {
 nimi <- read_excel("C:/Users/Daniel/iCloudDrive/01. College/Honours Bachelor Thesis/Analysis/Analysis Data Daniel.xlsx")
 
 # Make gender/used bci before/ used MI before column numeric (Male,Used MI{BCI before = 1)
-nimi$Gender <- ifelse(nimi$Gender == "Male", 1, 0)
+nimi$Gender <- ifelse(nimi$Gender == "Male", 1, 0) # this should be changed if a participant indicated 'other.' Should be changed in the future!
 nimi$`Used MI before` <- ifelse(nimi$`Used MI before` == "Yes", 1, 0)
 nimi$`Used BCI before` <- ifelse(nimi$`Used BCI before` == "Yes", 1, 0)
 ```
@@ -62,20 +67,24 @@ nimi$`Used BCI before` <- ifelse(nimi$`Used BCI before` == "Yes", 1, 0)
 # Sample Size
 samplesize <- data.frame(nrow(nimi))
 colnames(samplesize) <- "Sample Size"
-kable(samplesize)
+kable(samplesize) # Create the table for sample size
 
 # Tables of all the descriptive data regarding the sample
 df <- data.frame(Characteristic = c("Gender (Mean)", "Age (Mode)", "Language (Mode)", "Education (Mode)", "Used MI Before (Mean)", "Used BCI Before (Mean)"),
-                 Value = c(round(mean(nimi$Gender),2), getmode(nimi$Age), getmode(nimi$Language), getmode(nimi$Education), round(mean(nimi$`Used MI before`),2), round(mean(nimi$`Used BCI before`),2)))
-
-# Table with descriptive variables
-descriptives <- kable(df)
+                 Value = c(round(mean(nimi$Gender),2), getmode(nimi$Age), getmode(nimi$Language), getmode(nimi$Education), round(mean(nimi$`Used MI before`),2),
+                           round(mean(nimi$`Used BCI before`),2))) # Create the dataframe
+descriptives <- kable(df) # Create the table
 descriptives
 
 # Create Table with Age Frequencies
 Age <- as.data.frame(table(nimi$Age)) %>% arrange(desc(Freq))
 colnames(Age) <- c("Age", "Frequency")
 kable(Age)
+
+# Create Table with Age Frequencies
+Gender <- as.data.frame(table(nimi$Gender)) %>% arrange(desc(Freq))
+colnames(Gender) <- c("Gender", "Frequency")
+kable(Gender)
 
 # Create Table with Language Frequencies
 Language <- as.data.frame(table(nimi$Language)) %>% arrange(desc(Freq))
@@ -86,9 +95,6 @@ kable(Language)
 Education <- as.data.frame(table(nimi$Education)) %>% arrange(desc(Freq))
 colnames(Education) <- c("Education", "Frequency")
 kable(Education)
-table(nimi$Age)
-table(nimi$Gender)
-table(nimi$Education)
 ```
 
 ## Density Diagrams of the Descriptive Variables
@@ -147,8 +153,6 @@ CHI_V <- c(2, 4, 9, 13)
 CHI_W <- c(1, 3, 10, 14)
 CMC_V <- c(3, 7, 14, 16)
 CMC_W <- c(4, 8, 13, 15)
-CHI <- c(CHI_V, CHI_W)
-CMC <- c(CMC_V, CMC_W)
 
 # All variable are coded positively excelpt the third question of Experiential Realness for Mental Calculation
 ER <- data.frame(ER_V_HI = (nimi$ER_V_01[nimi$Condition %in% CHI_V] + nimi$ER_V_02[nimi$Condition %in% CHI_V] + nimi$ER_V_03[nimi$Condition %in% CHI_V])/3,
@@ -248,14 +252,13 @@ cohens_d(effERHI, ER ~ Condition, paired = T, var.equal = T)
 t.test(ER$ER[ER$Condition == 1 & ER$Type == 0], ER$ER[ER$Condition == 0 & ER$Type == 0],
        alternative = "greater", paired = T, var.equal = T) # Pooled sample dependent t-test testing a difference in Experiential Realness for Mental Calculation between Written and Video Instruction
 
-# Cohen's D for Hand Imagery
+# Cohen's D for Mental Calculation
 effERMC <- data.frame(video = ER$ER[ER$Condition == 1 & ER$Type == 0], written = ER$ER[ER$Condition == 0 & ER$Type == 0])
 effERMC <- gather(effERMC, key = "Condition", value = "ER")
 cohens_d(effERMC, ER ~ Condition, paired = T, var.equal = T)
 
-# Creating the Model to test for the interaction effect of task type (MC/HI)
+# Creating the Multiple Regression Model to test for the interaction effect of task type (MC/HI)
 summary(modelER) # More information on the model
-
 probe_interaction(modelER, pred = Condition, modx = Type) # testing the interaction term
 
 # Testing the difference of slopes between video and written for HI
@@ -263,7 +266,7 @@ slope_V_ER <- ER %>% filter(Type == 1) %>% lm(ER ~ Condition, data = .) %>% summ
 slope_W_ER <- ER %>% filter(Type == 0) %>% lm(ER ~ Condition, data = .) %>% summary()
 
 slopediff_ER <- (slope_V_ER$coefficients[,1][2] - slope_W_ER$coefficients[,1][2]) / (sqrt(slope_V_ER$coefficients[,2][2]^2 + slope_W_ER$coefficients[,2][2]^2))
-pt(slopediff_ER, df = 36, lower.tail = F) # p value for the difference in p values
+pt(slopediff_ER, df = 76, lower.tail = F) # p value for the difference in p values
 ```
 
 
@@ -362,10 +365,13 @@ probe_interaction(modelSP, pred = Condition, modx = Type) # testing the interact
 
 # Testing the difference of slopes between video and written for HI
 slope_V_SP <- SP %>% filter(Type == 1) %>% lm(SP ~ Condition, data = .) %>% summary()
+slope_V_SP
 slope_W_SP <- SP %>% filter(Type == 0) %>% lm(SP ~ Condition, data = .) %>% summary()
 
 slopediff_SP <- (slope_V_SP$coefficients[,1][2] - slope_W_SP$coefficients[,1][2]) / (sqrt(slope_V_SP$coefficients[,2][2]^2 + slope_W_SP$coefficients[,2][2]^2))
-pt(slopediff_SP, df = 36, lower.tail = F) # p value for the difference in p values
+pt(slopediff_SP, df = 76, lower.tail = F) # p value for the difference in p values
+
+
 
 ```
 
@@ -453,13 +459,127 @@ U_cronbach <- data.frame(na.omit(c(nimi$U_V_01, nimi$U_W_01)),
                          na.omit(c(nimi$U_V_07, nimi$U_W_07)))
 cronbach(U_cronbach)
 
-# T-Test for Hand Imagery 
+# T-Test for Usability
 t.test(U$U[U$Condition == 1], U$U[U$Condition == 0],
        alternative = "greater", paired = T, var.equal = T) # Pooled sample dependent t-test testing a difference in Usability for Hand Imagery between Written and Video Instruction
 
-# Cohen's D for Hand Imagery
-effUHI <- data.frame(video = U$U[U$Condition == 1], written = U$U[U$Condition == 0])
-effUHI <- gather(effUHI, key = "Condition", value = "U")
-cohens_d(effUHI, U ~ Condition, paired = T, var.equal = T)
+# Cohen's D for Usability
+effU <- data.frame(video = U$U[U$Condition == 1], written = U$U[U$Condition == 0])
+effU <- gather(effU, key = "Condition", value = "U")
+cohens_d(effU, U ~ Condition, paired = T, var.equal = T)
 ```
 
+```{r Order, echo = F, fig.align='center', comment = "", message = F,fig.keep='all'}
+ERplot<-data.frame(
+  MC_W = mean(ER$ER[ER$Condition == 0 & ER$Type == 0]),
+  HI_W = mean(ER$ER[ER$Condition == 0 & ER$Type == 1]),
+  MC_V = mean(ER$ER[ER$Condition == 1 & ER$Type == 0]),
+  HI_V = mean(ER$ER[ER$Condition == 1 & ER$Type == 1]))
+
+ERplot <- pivot_longer(ERplot, 'MC_W':'HI_V', names_to = 'condition', values_to = 'value')
+
+ERplot <- data.frame(ERplot[,2], str_split_fixed(ERplot$condition, "_", 2))
+
+
+ERplot[,3] <- ifelse(ERplot$X2 == "V", "Video", "Written")
+ERplot[,3] <- as.factor(ERplot[,3])
+ERplot
+
+
+ERplot <- ERplot %>% ggplot(aes(x=X2, y=value, linetype = X1, shape = X1)) +
+  geom_point(size = 3) +
+  geom_line(aes(group = X1), size = 1) +
+  
+  scale_x_discrete(limits = rev(levels(ERplot$X2))) + xlab(c("Instruction Medium")) +
+  ylab(c("Experiential Realness")) +
+  theme_apa() +
+  theme(text = element_text(family="Times New Roman", face="bold", size=15)) +
+  theme(legend.title = element_blank(),
+        legend.spacing.y = unit(0, "mm"), 
+        panel.border = element_rect(colour = "black", fill=NA),
+        aspect.ratio = 1, axis.text = element_text(colour = 1, size = 12),
+        legend.background = element_blank(),
+        legend.box.background = element_rect(colour = "black")) + 
+  theme(
+   legend.position = c(.95, .95),
+   legend.justification = c("right", "top"),
+    legend.box.just = "right",
+    legend.margin = margin(6, 6, 6, 6))
+  
+
+SPplot<-data.frame(
+  MC_W = mean(SP$SP[SP$Condition == 0 & SP$Type == 0]),
+  HI_W = mean(SP$SP[SP$Condition == 0 & SP$Type == 1]),
+  MC_V = mean(SP$SP[SP$Condition == 1 & SP$Type == 0]),
+  HI_V = mean(SP$SP[SP$Condition == 1 & SP$Type == 1]))
+
+SPplot <- pivot_longer(SPplot, 'MC_W':'HI_V', names_to = 'condition', values_to = 'value')
+
+SPplot <- data.frame(SPplot[,2], str_split_fixed(SPplot$condition, "_", 2))
+
+
+SPplot[,3] <- ifelse(SPplot$X2 == "V", "Video", "Written")
+SPplot[,3] <- as.factor(SPplot[,3])
+SPplot
+
+
+SPplot <- SPplot %>% ggplot(aes(x=X2, y=value, linetype = X1, shape = X1)) +
+  geom_point(size = 3) +
+  geom_line(aes(group = X1), size = 1) +
+  
+  scale_x_discrete(limits = rev(levels(SPplot$X2))) + xlab(c("Instruction Medium")) +
+  ylab(c("Subjective Performance")) +
+  theme_apa() +
+  theme(text = element_text(family="Times New Roman", face="bold", size=15)) +
+  theme(legend.title = element_blank(),
+        legend.spacing.y = unit(0, "mm"), 
+        panel.border = element_rect(colour = "black", fill=NA),
+        aspect.ratio = 1, axis.text = element_text(colour = 1, size = 12),
+        legend.background = element_blank(),
+        legend.box.background = element_rect(colour = "black")) + 
+  theme(
+    legend.position = c(.95, .95),
+    legend.justification = c("right", "top"),
+    legend.box.just = "right",
+    legend.margin = margin(6, 6, 6, 6))
+
+
+Uplot<-data.frame(
+  MC_W = mean(U$U[U$Condition == 0]),
+  HI_V = mean(U$U[U$Condition == 1]))
+
+Uplot <- pivot_longer(Uplot, 'MC_W':'HI_V', names_to = 'condition', values_to = 'value')
+
+Uplot <- data.frame(Uplot[,2], str_split_fixed(Uplot$condition, "_", 2))
+
+
+Uplot[,3] <- ifelse(Uplot$X2 == "V", "Video", "Written")
+Uplot[,3] <- as.factor(Uplot[,3])
+Uplot
+
+Uplot <- Uplot %>% ggplot(aes(x=X2, y=value)) +
+  geom_point(size = 3) +
+  geom_line(aes(group = 1), size = 1) +
+  
+  scale_x_discrete(limits = rev(levels(Uplot$X2))) + xlab(c("Instruction Medium")) +
+  ylab(c("Usability")) +
+  theme_apa() +
+  theme(text = element_text(family="Times New Roman", face="bold", size=15)) +
+  theme(legend.title = element_blank(),
+        legend.spacing.y = unit(0, "mm"), 
+        panel.border = element_rect(colour = "black", fill=NA),
+        aspect.ratio = 1, axis.text = element_text(colour = 1, size = 12),
+        legend.background = element_blank(),
+        legend.box.background = element_rect(colour = "black")) + 
+  theme(
+    legend.position = c(.95, .95),
+    legend.justification = c("right", "top"),
+    legend.box.just = "right",
+    legend.margin = margin(6, 6, 6, 6))
+
+ERplot
+SPplot
+Uplot
+
+
+```
